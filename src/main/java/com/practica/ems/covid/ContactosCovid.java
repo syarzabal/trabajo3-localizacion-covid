@@ -88,29 +88,25 @@ public class ContactosCovid {
 			}
 		}
 	}
+	
 
-	public void loadDataFile(String fichero, boolean reset) {
-		File archivo = null;
-		FileReader fr = null;
-		BufferedReader br = null;
-		String datas[] = null, data = null;
-		loadDataFile(fichero, reset, archivo, fr, br, datas, data);
-		
-	}
-
+	// TODO: refactorizar este metodo para solucionar el issue #2
 	@SuppressWarnings("resource")
-	public void loadDataFile(String fichero, boolean reset, File archivo, FileReader fr, BufferedReader br, String datas[], String data ) {
+	public void loadDataFile(String fichero, boolean reset) {
+		FileReader fr = null;
+		String[] datas = null;
+		String data = null;
 		try {
 			// Apertura del fichero y creacion de BufferedReader para poder
 			// hacer una lectura comoda (disponer del metodo readLine()).
-			archivo = new File(fichero);
+			File archivo = new File(fichero);
 			fr = new FileReader(archivo);
-			br = new BufferedReader(fr);
+			BufferedReader br = new BufferedReader(fr);
 			if (reset) {
 				this.poblacion = new Poblacion();
 				this.localizacion = new Localizacion();
 				this.listaContactos = new ListaContactos();
-			} 
+			}
 			/**
 			 * Lectura del fichero	línea a línea. Compruebo que cada línea 
 			 * tiene el tipo PERSONA o LOCALIZACION y cargo la línea de datos en la 
@@ -119,27 +115,9 @@ public class ContactosCovid {
 			while ((data = br.readLine()) != null) {
 				datas = dividirEntrada(data.trim());
 				for (String linea : datas) {
-					String datos[] = this.dividirLineaData(linea);
-					if (!datos[0].equals("PERSONA") && !datos[0].equals("LOCALIZACION")) {
-						throw new EmsInvalidTypeException();
-					}
-					if (datos[0].equals("PERSONA")) {
-						if (datos.length != Constantes.MAX_DATOS_PERSONA) {
-							throw new EmsInvalidNumberOfDataException("El número de datos para PERSONA es menor de 8");
-						}
-						this.poblacion.addPersona(this.crearPersona(datos));
-					}
-					if (datos[0].equals("LOCALIZACION")) {
-						if (datos.length != Constantes.MAX_DATOS_LOCALIZACION) {
-							throw new EmsInvalidNumberOfDataException(
-									"El número de datos para LOCALIZACION es menor de 6" );
-						}
-						PosicionPersona pp = this.crearPosicionPersona(datos);
-						this.localizacion.addLocalizacion(pp);
-						this.listaContactos.insertarNodoTemporal(pp);
-					}
+					String[] datos = this.dividirLineaData(linea);
+					procesarLinea(datos, data);
 				}
-
 			}
 
 		} catch (Exception e) {
@@ -148,15 +126,58 @@ public class ContactosCovid {
 			// En el finally cerramos el fichero, para asegurarnos
 			// que se cierra tanto si todo va bien como si salta
 			// una excepcion.
-			try {
-				if (null != fr) {
-					fr.close();
-				}
-			} catch (Exception e2) {
-				e2.printStackTrace();
-			}
+			cerrarFichero(fr);
 		}
 	}
+
+
+	private void procesarLinea(String[] datos, String data ) throws EmsInvalidTypeException, EmsInvalidNumberOfDataException, EmsDuplicatePersonException, EmsDuplicateLocationException {
+		if (!esPersona(datos[0]) && !esLocalizacion(datos[0])) {
+			throw new EmsInvalidTypeException();
+		}
+		if (esPersona(datos[0])) {
+			procesarPersona(datos);
+		}
+		if (esLocalizacion(datos[0])) {
+			procesarLocalizacion(datos);
+		}
+	}
+
+	private void procesarPersona(String[] datos) throws EmsInvalidNumberOfDataException, EmsDuplicatePersonException {
+		if (datos.length != Constantes.MAX_DATOS_PERSONA) {
+			throw new EmsInvalidNumberOfDataException("El número de datos para PERSONA es menor de 8");
+		}
+		this.poblacion.addPersona(this.crearPersona(datos));
+	}
+
+	private void procesarLocalizacion(String[] datos) throws EmsInvalidNumberOfDataException, EmsDuplicateLocationException {
+		if (datos.length != Constantes.MAX_DATOS_LOCALIZACION) {
+			throw new EmsInvalidNumberOfDataException(
+					"El número de datos para LOCALIZACION es menor de 6" );
+		}
+		PosicionPersona pp = this.crearPosicionPersona(datos);
+		this.localizacion.addLocalizacion(pp);
+		this.listaContactos.insertarNodoTemporal(pp);
+	}
+
+	private boolean esPersona(String string){
+		return string.equals("PERSONA");
+	}
+
+	private boolean esLocalizacion(String string){
+		return string.equals("LOCALIZACION");
+	}
+
+	private void cerrarFichero(FileReader fr){
+		try {
+			if (null != fr) {
+				fr.close();
+			}
+		} catch (Exception e2) {
+			e2.printStackTrace();
+		}
+	}
+
 	public int findPersona(String documento) throws EmsPersonNotFoundException {
 		int pos;
 		try {
