@@ -116,7 +116,7 @@ public class ContactosCovid {
 				datas = dividirEntrada(data.trim());
 				for (String linea : datas) {
 					String[] datos = this.dividirLineaData(linea);
-					procesarLinea(datos, data);
+					procesarLinea(datos);
 				}
 			}
 
@@ -131,7 +131,7 @@ public class ContactosCovid {
 	}
 
 
-	private void procesarLinea(String[] datos, String data ) throws EmsInvalidTypeException, EmsInvalidNumberOfDataException, EmsDuplicatePersonException, EmsDuplicateLocationException {
+	private void procesarLinea(String[] datos) throws EmsInvalidTypeException, EmsInvalidNumberOfDataException, EmsDuplicatePersonException, EmsDuplicateLocationException {
 		if (!esPersona(datos[0]) && !esLocalizacion(datos[0])) {
 			throw new EmsInvalidTypeException();
 		}
