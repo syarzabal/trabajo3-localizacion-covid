@@ -88,12 +88,7 @@ public class ContactosCovid {
 			}
 		}
 	}
-
-//	public void loadDataFile(String fichero, boolean reset) {
-//
-//		loadDataFile(fichero, reset);
-//
-//	}
+	
 
 	// TODO: refactorizar este metodo para solucionar el issue #2
 	@SuppressWarnings("resource")
